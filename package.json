@@ -1,0 +1,40 @@
+{
+  "name": "test",
+  "version": "1.1.0",
+  "description": "Fimls_Database",
+  "main": "index.js",
+  "homepage": "https://denismalv.github.io/test-js-project/",
+  "scripts": {
+    "dev": "parcel src/*.html",
+    "build": "parcel build src/*.html --public-url https://denismalv.github.io/test-js-project/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DenisMalv/test-js-project.git"
+  },
+  "keywords": [],
+  "author": "Denis Malniev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DenisMalv/test-js-project/issues"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.5",
+    "parcel-plugin-handlebars-precompile": "^1.0.2",
+    "parcel-plugin-nuke-dist": "^1.0.1",
+    "posthtml-include": "^1.6.2",
+    "sass": "^1.32.8",
+    "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.11.0",
+    "@vimeo/player": "^2.16.2",
+    "axios": "^0.24.0",
+    "bootstrap": "^5.1.3",
+    "flatpickr": "^4.6.9",
+    "lodash.debounce": "^4.0.8",
+    "lodash.throttle": "^4.1.1",
+    "notiflix": "^3.2.2",
+    "simplelightbox": "^2.10.1"
+  }
+}
