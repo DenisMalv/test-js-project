@@ -19,32 +19,35 @@ const refs = {
 genresMarkup()
 const formInput = refs.form.elements.searchQuery;
 refs.form.addEventListener('submit', onFormSubmit)
-refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtn)
+
 
 console.log(refs.genres.children)
 // refs.genres.children.map(elem=>elem.addEventListener('click',(e)=>console.log(e.target)))
 
-// onclickgenres()
 let lightbox 
-
 //=========== асинк фн. при отправке формы =======
 async function onFormSubmit(event) {
   event.preventDefault();
   refs.gallery.innerHTML = ''
   options.pageNumber = 1;
   refs.btnLoadMore.classList.add('is-hidden')
-  console.log(formInput.value)
-  if (formInput.value.trim() === '') {
-    Notify.info("You seen random photo")
+  options.query = formInput.value
+
+  if (options.query.trim() === '') {
+    return Notify.failure("Please enter film name")
   }
   try {
     refs.form.elements[1].disabled = true
-    const response = await fetchPhoto(formInput.value)
+    const response = await fetchPhoto()
+    refs.form.elements[1].disabled = false
     console.log(response)
+    if (options.query !== "") {
+      refs.btnLoadMore.removeEventListener('click', onClickLoadMoreBtnGenresLink)
+    }
     if (response.results.length === 0) {
         return Notify.failure("Sorry, there are no images matching your search query. Please try again.")
     }
-    Notify.info(`Hooray! We found ${response.totalHits} images.`)
+    Notify.info(`Hooray! We found ${response.total_results} films.`)
     countryArrayMarkup(response)
     console.log(refs.gallery)
     console.dir(refs.gallery)
@@ -52,16 +55,17 @@ async function onFormSubmit(event) {
     lightbox = new SimpleLightbox('.gallery a', {
     captions: true, captionSelector: 'img', captionType: 'attr', captionsData: `alt`, captionPosition: 'bottom', captionDelay: 250
     });
-    asd()
-    if (response.totalHits < options.pageItemCount) {          
+    if (response.total_results < options.pageItemCount) {          
           return
     }
 
     console.dir(document.querySelector('.gallery').firstElementChild)
-        console.log('current page:',options.pageNumber)
-        options.pageNumber += 1;
+    console.log('current page:',options.pageNumber)
+    options.pageNumber += 1;
     console.log('next page :', options.pageNumber)
-    refs.form.elements[1].disabled = false
+    
+    refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnSearchLink)
+    
     setTimeout(() => refs.btnLoadMore.classList.remove('is-hidden'), 1000)
   } catch (error) {
     console.log('Это тот же эрор что и выше',error)
@@ -69,27 +73,30 @@ async function onFormSubmit(event) {
 }
 
 //=========== асинк фн. при подгрузке изображений =======
-async function onClickLoadMoreBtn() {
+async function onClickLoadMoreBtnSearchLink() {
   try {
     buttonDisabledTrue()
-    const response = await fetchPhoto(formInput.value)
+    const  response = await fetchPhoto(formInput.value)
+    console.log(response)
     console.log('current page:',options.pageNumber)
     options.pageNumber += 1
     console.log('next page :', options.pageNumber)
     countryArrayMarkup(response)
     smoothScroll()
-    lightbox.refresh()
+    // lightbox.refresh()
     
-    if (response.totalHits / options.pageItemCount < options.pageNumber) {
-      refs.btnLoadMore.classList.add('is-hidden')
-      return Notify.info("We're sorry, but you've reached the end of search results.");
-    }
+    // if (response.totalHits / options.pageItemCount < options.pageNumber) {
+    //   refs.btnLoadMore.classList.add('is-hidden')
+    //   return Notify.info("We're sorry, but you've reached the end of search results.");
+    // }
     
     buttonDisabledFalse()
   } catch (error) {
     console.log(error)
   }
 }
+
+
 function buttonDisabledTrue() {
   refs.btnLoadMore.setAttribute('disabled', true)
 }
@@ -120,25 +127,63 @@ function countryArrayMarkup(array) {
     }).join("")
   refs.gallery.insertAdjacentHTML('beforeend', arrayMarkup)
 }
-
+console.log('genresId',options.genresId)
+// ================ жанры ========================
 async function genresMarkup() {
   const r = await fetchGenres()
-  
   const genres = r.genres.map(({ id, name }) => {
     return `
     <button class="genres-btn btn btn-info"  id="${id}">${name}</button>`
   }).join("")
   refs.genres.insertAdjacentHTML('beforeend', genres)
-  const genresArray = [...refs.genres.children]
-  genresArray.map(elem => elem.addEventListener('click', async (e) => {
-    const a = await discoverGenres(e.target.id)
-    console.log(a)
-    console.log(e.target.id)
-    refs.gallery.innerHTML = ''
-    countryArrayMarkup(a)
-  }))
-
 }
+
+refs.genres.addEventListener('click', onGenresBtnClick)
+
+
+async function onGenresBtnClick(event) {
+  refs.btnLoadMore.removeEventListener('click', onClickLoadMoreBtnSearchLink)
+  refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnGenresLink)
+  formInput.value = ''
+  options.pageNumber = 1
+  options.genresId = event.target.id
+  try {
+    const a = await discoverGenres()
+
+    console.log('a:', a)
+    console.log('e.target:', event.target)
+    console.log('options.genresId:', options.genresId)
+
+    refs.gallery.innerHTML = ''
+    setTimeout(() => refs.btnLoadMore.classList.remove('is-hidden'), 1000)
+    countryArrayMarkup(a)
+    options.pageNumber += 1
+  } catch (err) {
+    console.log(err)
+  }
+}
+async function onClickLoadMoreBtnGenresLink() {
+      try {
+        buttonDisabledTrue()
+        const response = await discoverGenres()
+        
+        console.log('current page genres:', options.pageNumber)
+        options.pageNumber += 1
+        console.log('next page genres:', options.pageNumber)
+        console.log(response)
+        
+        countryArrayMarkup(response)
+        smoothScroll()
+        buttonDisabledFalse()
+        
+      } catch (error) {
+        console.log(error)
+      }
+}
+   
+
+
+
 
 //============ smoothScroll =================
 function smoothScroll() {
@@ -154,21 +199,21 @@ window.scrollBy({
 
 
 //=========== addMoreImg ==================
-function asd() {
-  // const img = document.querySelectorAll('.photo-card')
-  // console.log(img)
-  lightbox.on('next.simplelightbox',async(e) => {
-    // console.log(window.location.hash)
-    const current = document.querySelector('.sl-current')
-    const total = document.querySelector('.sl-total')
-    console.dir(current.textContent)
-    console.log(+total.textContent-1)
-    if (current.textContent == total.textContent) {
-      console.log('ok')
-      lightbox.refresh()
-    }
-  })
-}
+// function asd() {
+//   // const img = document.querySelectorAll('.photo-card')
+//   // console.log(img)
+//   lightbox.on('next.simplelightbox',async(e) => {
+//     // console.log(window.location.hash)
+//     const current = document.querySelector('.sl-current')
+//     const total = document.querySelector('.sl-total')
+//     console.dir(current.textContent)
+//     console.log(+total.textContent-1)
+//     if (current.textContent == total.textContent) {
+//       console.log('ok')
+//       lightbox.refresh()
+//     }
+//   })
+// }
 
 //============ old variant onFormSubmit ============
 // function onFormSubmit(event) {
