@@ -87,3 +87,17 @@ body {
   height: 40px;
   flex-basis: 12%;
 }
+
+.genresIsActive {
+  background-color: darkcyan;
+}
+.btn-info:hover {
+  color: #000;
+  background-color: cyan;
+  border-color: #25cff2;
+}
+.btn-info:focus {
+  color: #000;
+  background-color: darkcyan;
+  border-color: #25cff2;
+}

@@ -127,8 +127,12 @@ function countryArrayMarkup(array) {
     }).join("")
   refs.gallery.insertAdjacentHTML('beforeend', arrayMarkup)
 }
-console.log('genresId',options.genresId)
+console.log('genresId', options.genresId)
+
+
 // ================ жанры ========================
+refs.genres.addEventListener('click', onGenresBtnClick)
+
 async function genresMarkup() {
   const r = await fetchGenres()
   const genres = r.genres.map(({ id, name }) => {
@@ -138,47 +142,63 @@ async function genresMarkup() {
   refs.genres.insertAdjacentHTML('beforeend', genres)
 }
 
-refs.genres.addEventListener('click', onGenresBtnClick)
-
-
 async function onGenresBtnClick(event) {
   refs.btnLoadMore.removeEventListener('click', onClickLoadMoreBtnSearchLink)
   refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnGenresLink)
+  // const allRenderGenresButton = [...refs.genres.children]
+  // allRenderGenresButton.forEach(eachBtn=>eachBtn.classList.remove('genresIsActive'))
+  if (event.target === refs.genres) {
+    return
+  }
+  event.target.classList.toggle('genresIsActive')
   formInput.value = ''
   options.pageNumber = 1
-  options.genresId = event.target.id
+  toggleGenres(event.target.id)
+  // options.genresId.push(event.target.id)
   try {
     const a = await discoverGenres()
 
-    console.log('a:', a)
     console.log('e.target:', event.target)
     console.log('options.genresId:', options.genresId)
 
     refs.gallery.innerHTML = ''
     setTimeout(() => refs.btnLoadMore.classList.remove('is-hidden'), 1000)
+    // countryArrayMarkup(a) - old
+    console.log('результат поиска',a.results)
+    console.log('количесво фильмов',a.total_results)
     countryArrayMarkup(a)
     options.pageNumber += 1
   } catch (err) {
     console.log(err)
   }
 }
+
+function toggleGenres(id) {
+  if (options.genresId.includes(id)) {
+    const genresIdx = options.genresId.indexOf(id)
+    options.genresId.splice(genresIdx, 1)
+    return
+  }
+  options.genresId.push(id)
+}
+
 async function onClickLoadMoreBtnGenresLink() {
-      try {
-        buttonDisabledTrue()
-        const response = await discoverGenres()
+  try {
+    buttonDisabledTrue()
+    const response = await discoverGenres()
         
-        console.log('current page genres:', options.pageNumber)
-        options.pageNumber += 1
-        console.log('next page genres:', options.pageNumber)
-        console.log(response)
+    console.log('current page genres:', options.pageNumber)
+    options.pageNumber += 1
+    console.log('next page genres:', options.pageNumber)
+    console.log(response)
         
-        countryArrayMarkup(response)
-        smoothScroll()
-        buttonDisabledFalse()
+    countryArrayMarkup(response)
+    smoothScroll()
+    buttonDisabledFalse()
         
-      } catch (error) {
-        console.log(error)
-      }
+  } catch (error) {
+    console.log(error)
+  }
 }
    
 
