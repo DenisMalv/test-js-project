@@ -101,3 +101,17 @@ body {
   background-color: darkcyan;
   border-color: #25cff2;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 35px 0;
+}
+.pages {
+  padding-left: 0;
+}
+.page_item {
+  margin: 0 5px;
+  list-style: none;
+}

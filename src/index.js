@@ -3,7 +3,7 @@ import './css/styles.css';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import { Notify } from "notiflix/build/notiflix-notify-aio";
-import { fetchPhoto, fetchGenres,discoverGenres } from './fetchPhoto'
+import { fetchPhoto, fetchGenres,discoverGenres, fetchPopularityMovie} from './fetchPhoto'
 import { options } from './fetchPhoto'
 import { preventOverflow } from '@popperjs/core';
 import { Button } from 'bootstrap';
@@ -13,9 +13,17 @@ const refs = {
     form: document.querySelector('#search-form'),
     gallery: document.querySelector('.gallery'),
     btnLoadMore: document.querySelector('.load-more'),
-    genres: document.querySelector('.genres')
+    genres: document.querySelector('.genres'),
+    prevPage: document.querySelector("[data-page='prev']"),
+    nextPage: document.querySelector("[data-page='next']"),
+    lessPage: document.querySelector("[data-page='less']"),
+    morePage: document.querySelector("[data-page='more']"),
+    pages:document.querySelector('.pages')
     
 }
+let maxPage = 1
+let currentPage = 1
+
 genresMarkup()
 const formInput = refs.form.elements.searchQuery;
 refs.form.addEventListener('submit', onFormSubmit)
@@ -25,6 +33,19 @@ console.log(refs.genres.children)
 // refs.genres.children.map(elem=>elem.addEventListener('click',(e)=>console.log(e.target)))
 
 let lightbox 
+
+
+// ================== tranding ==================
+async function startPageMarkUpPopularityMovie() {
+  const resp = await fetchPopularityMovie()
+  setTimeout(() => {
+    countryArrayMarkup(resp)
+    console.log('Это популярити запрос',resp)
+  }, 2000);
+  
+}
+startPageMarkUpPopularityMovie()
+
 //=========== асинк фн. при отправке формы =======
 async function onFormSubmit(event) {
   event.preventDefault();
@@ -106,17 +127,17 @@ function buttonDisabledFalse() {
 
 //=========== разметкa =======
 function countryArrayMarkup(array) {
-    const arrayMarkup = array.results.map(({poster_path,title,vote_average}) =>
+    const arrayMarkup = array.results.map(({poster_path,original_title,vote_average}) =>
     {
       // console.log(largeImageURL)
       return `
   <div class="photo-card">
     <a href="https://image.tmdb.org/t/p/w500/${poster_path}">
-      <img src="https://image.tmdb.org/t/p/w200/${poster_path}" alt="${title}" loading="lazy" />
+      <img src="https://image.tmdb.org/t/p/w200/${poster_path}" alt="${original_title}" loading="lazy" />
     </a>
     <div class="info">
       <p class="info-item">
-        <b>${title}</b>
+        <b>${original_title}</b>
       </p>
       <p class="info-item">
         <b>${vote_average}</b>
