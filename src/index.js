@@ -3,7 +3,7 @@ import './css/styles.css';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import { Notify } from "notiflix/build/notiflix-notify-aio";
-import { fetchPhoto, fetchGenres,discoverGenres, fetchPopularityMovie} from './fetchPhoto'
+import { fetchPhoto, fetchGenres,discoverGenres, fetchTrandingMovie} from './fetchPhoto'
 import { options } from './fetchPhoto'
 import { preventOverflow } from '@popperjs/core';
 import { Button } from 'bootstrap';
@@ -37,13 +37,37 @@ let lightbox
 
 // ================== tranding ==================
 async function startPageMarkUpPopularityMovie() {
-  const resp = await fetchPopularityMovie()
+  const resp = await fetchTrandingMovie()
+  options.pageNumber += 1
   setTimeout(() => {
     countryArrayMarkup(resp)
-    console.log('Это популярити запрос',resp)
-  }, 2000);
+    refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnTrandingLink)
+    setTimeout(() => refs.btnLoadMore.classList.remove('is-hidden'), 1000)
+    console.log('Это tranding запрос',resp)
+  }, 1000);
   
 }
+
+async function onClickLoadMoreBtnTrandingLink() {
+  try {
+    buttonDisabledTrue()
+    const response = await fetchTrandingMovie()
+        
+    console.log('current page genres:', options.pageNumber)
+    options.pageNumber += 1
+    console.log('next page genres:', options.pageNumber)
+    console.log(response)
+        
+    countryArrayMarkup(response)
+    smoothScroll()
+    buttonDisabledFalse()
+        
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+
 startPageMarkUpPopularityMovie()
 
 //=========== асинк фн. при отправке формы =======
@@ -165,6 +189,7 @@ async function genresMarkup() {
 
 async function onGenresBtnClick(event) {
   refs.btnLoadMore.removeEventListener('click', onClickLoadMoreBtnSearchLink)
+  refs.btnLoadMore.removeEventListener('click',onClickLoadMoreBtnTrandingLink)
   refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnGenresLink)
   // const allRenderGenresButton = [...refs.genres.children]
   // allRenderGenresButton.forEach(eachBtn=>eachBtn.classList.remove('genresIsActive'))
