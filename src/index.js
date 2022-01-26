@@ -7,6 +7,7 @@ import { fetchPhoto, fetchGenres,discoverGenres, fetchTrandingMovie} from './fet
 import { options } from './fetchPhoto'
 import { preventOverflow } from '@popperjs/core';
 import { Button } from 'bootstrap';
+import { max } from 'lodash';
 
 
 const refs = {
@@ -21,7 +22,6 @@ const refs = {
     pages:document.querySelector('.pages')
     
 }
-let maxPage = 1
 let currentPage = 1
 
 genresMarkup()
@@ -74,6 +74,7 @@ startPageMarkUpPopularityMovie()
 async function onFormSubmit(event) {
   event.preventDefault();
   refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
   options.pageNumber = 1;
   refs.btnLoadMore.classList.add('is-hidden')
   options.query = formInput.value
@@ -83,7 +84,9 @@ async function onFormSubmit(event) {
   }
   try {
     refs.form.elements[1].disabled = true
+
     const response = await fetchPhoto()
+    options.maxPage = response.total_pages
     refs.form.elements[1].disabled = false
     console.log(response)
     if (options.query !== "") {
@@ -94,6 +97,8 @@ async function onFormSubmit(event) {
     }
     Notify.info(`Hooray! We found ${response.total_results} films.`)
     countryArrayMarkup(response)
+    markupPages(response)
+
     console.log(refs.gallery)
     console.dir(refs.gallery)
     
@@ -105,9 +110,9 @@ async function onFormSubmit(event) {
     }
 
     console.dir(document.querySelector('.gallery').firstElementChild)
-    console.log('current page:',options.pageNumber)
-    options.pageNumber += 1;
-    console.log('next page :', options.pageNumber)
+    // console.log('current page:',options.pageNumber)
+    // options.pageNumber += 1;
+    // console.log('next page :', options.pageNumber)
     
     refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnSearchLink)
     
@@ -138,6 +143,100 @@ async function onClickLoadMoreBtnSearchLink() {
     buttonDisabledFalse()
   } catch (error) {
     console.log(error)
+  }
+}
+refs.prevPage.addEventListener('click',onClickPrevPageBtn)
+refs.nextPage.addEventListener('click',onClickNextPageBtn)
+refs.morePage.addEventListener('click',onClickMorePageBtn)
+refs.lessPage.addEventListener('click',onClickLessPageBtn)
+refs.pages.addEventListener('click', onClickNumberPageBtn)
+
+function markupPages(array){
+const arrayMarkup = `<li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page-1}>${array.page-1}</a></li>
+          <li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page}>${array.page}</a></li>
+          <li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page +1}>${array.page +1}</a></li>`
+  refs.pages.insertAdjacentHTML('beforeend', arrayMarkup)
+}
+
+async function onClickNumberPageBtn(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log(e.target)
+  console.log(e.target.dataset.page)
+  options.pageNumber = +e.target.dataset.page
+  const response = await fetchPhoto()
+    console.log(response)
+  countryArrayMarkup(response)
+  markupPages(response)
+
+}
+async function onClickPrevPageBtn(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('prev')
+  console.log(e.target)
+  if (options.pageNumber > 1) {
+    options.pageNumber -= 1;
+    const response = await fetchPhoto()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+  }
+}
+async function onClickNextPageBtn(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('next')
+  console.log(e.target)
+  if (options.pageNumber < options.maxPage) {
+    options.pageNumber += 1;
+    const response = await fetchPhoto()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+  }
+}
+
+async function onClickMorePageBtn(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('next')
+  console.log(e.target)
+  if (options.pageNumber < options.maxPage) {
+    if (options.pageNumber >= options.maxPage) {
+      options.pageNumber = options.maxPage
+    } else {
+      options.pageNumber += 10;
+    }
+    
+    const response = await fetchPhoto()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+  }
+}
+
+
+async function onClickLessPageBtn(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('next')
+  console.log(e.target)
+  if (options.pageNumber < options.maxPage) {
+    if (options.pageNumber <= 10) {
+      options.pageNumber = 1
+    } else {
+      options.pageNumber -= 10;
+    }
+    const response = await fetchPhoto()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
   }
 }
 

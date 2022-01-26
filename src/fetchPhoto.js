@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const options = {query:'',pageNumber: 1, pageItemCount:20,genresId:[]};
+export const options = {query:'',pageNumber: 1, pageItemCount:20,genresId:[],maxPage:0};
 
 // async function fetchPhoto(namePhoto) {
 //     const SEARCH_URL = 'https://pixabay.com/api/'
