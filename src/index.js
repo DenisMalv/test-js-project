@@ -67,7 +67,7 @@ async function onClickLoadMoreBtnTrandingLink() {
   }
 }
 
-
+// ================== trand zapros =================
 startPageMarkUpPopularityMovie()
 
 //=========== асинк фн. при отправке формы =======
@@ -77,6 +77,7 @@ async function onFormSubmit(event) {
   refs.pages.innerHTML = ''
   options.pageNumber = 1;
   refs.btnLoadMore.classList.add('is-hidden')
+  // formInput.value = 'avengers'
   options.query = formInput.value
 
   if (options.query.trim() === '') {
@@ -98,6 +99,9 @@ async function onFormSubmit(event) {
     Notify.info(`Hooray! We found ${response.total_results} films.`)
     countryArrayMarkup(response)
     markupPages(response)
+    hideFirstPage()
+   togglePaginationBtn()
+
 
     console.log(refs.gallery)
     console.dir(refs.gallery)
@@ -151,38 +155,105 @@ refs.morePage.addEventListener('click',onClickMorePageBtn)
 refs.lessPage.addEventListener('click',onClickLessPageBtn)
 refs.pages.addEventListener('click', onClickNumberPageBtn)
 
-function markupPages(array){
-const arrayMarkup = `<li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page-1}>${array.page-1}</a></li>
-          <li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page}>${array.page}</a></li>
-          <li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page +1}>${array.page +1}</a></li>`
+function markupPages(array) {
+  const  arrayMarkup = `<li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page - 1}>${array.page - 1}</a></li>
+          <li class="page_item btn btn-info"><a href="#" class="page_link genresIsActive" data-page=${array.page}>${array.page}</a></li>
+          <li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page + 1}>${array.page + 1}</a></li>`
   refs.pages.insertAdjacentHTML('beforeend', arrayMarkup)
 }
 
 async function onClickNumberPageBtn(e) {
+  if (e.target.nodeName === 'UL' || e.target.nodeName === 'LI') {
+    return
+  }
   refs.gallery.innerHTML = ''
   refs.pages.innerHTML = ''
   e.preventDefault();
   console.log(e.target)
   console.log(e.target.dataset.page)
+  console.dir(refs.pages)
   options.pageNumber = +e.target.dataset.page
+  console.log(refs.pages)
+  console.log(refs.pages.firstElementChild)
+  // if (refs.pages.dataset.page === '0') {
+  //   refs.pages.classList.add('is-hidden')
+  // }
+  
   const response = await fetchPhoto()
     console.log(response)
   countryArrayMarkup(response)
   markupPages(response)
-
+  hideFirstPage()
+  hideLastPage()
+  togglePaginationBtn()
+  
 }
+
+function togglePaginationBtn() {
+    refs.prevPage.parentNode.classList.remove('disabled')
+    refs.lessPage.parentNode.classList.remove('disabled')
+    refs.nextPage.parentNode.classList.remove('disabled')
+    refs.morePage.parentNode.classList.remove('disabled')
+
+  
+  if (options.pageNumber == 1) {
+    refs.prevPage.parentNode.classList.add('disabled')
+    refs.lessPage.parentNode.classList.add('disabled')
+  }
+  if (options.pageNumber === options.maxPage) {
+    refs.nextPage.parentNode.classList.add('disabled')
+    refs.morePage.parentNode.classList.add('disabled')
+  }
+}
+
+
+
+function hideFirstPage() {
+  // console.log(refs.pages)
+  // console.log(refs.pages.firstElementChild)
+  // console.log(refs.pages.firstElementChild.firstElementChild.dataset.page)
+  
+  if (refs.pages.firstElementChild.firstElementChild.dataset.page === '0') {
+    refs.pages.firstElementChild.classList.add('is-hidden')
+  }
+}
+function hideLastPage() {
+  // console.log(refs.pages)
+  // console.log(refs.pages.firstElementChild)
+  // console.log(refs.pages.firstElementChild.firstElementChild.dataset.page)
+  console.log(options.maxPage)
+  console.log(options.pageNumber)
+  console.dir(refs.pages.lastElementChild)
+  console.dir(refs.pages.lastElementChild.firstElementChild)
+  console.dir(refs.pages.lastElementChild.firstElementChild.dataset.page,'a')
+
+  if (refs.pages.lastElementChild.firstElementChild.dataset.page-1 == options.maxPage) {
+    refs.pages.lastElementChild.classList.add('is-hidden')
+  }
+}
+
+
 async function onClickPrevPageBtn(e) {
   refs.gallery.innerHTML = ''
   refs.pages.innerHTML = ''
   e.preventDefault();
   console.log('prev')
   console.log(e.target)
+  // toggleNextPrevBtn()
+  refs.nextPage.parentNode.classList.remove('disabled')
+  
+  
   if (options.pageNumber > 1) {
     options.pageNumber -= 1;
     const response = await fetchPhoto()
     console.log(response)
     countryArrayMarkup(response)
     markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+    // toggleNextPrevBtn()
+    
   }
 }
 async function onClickNextPageBtn(e) {
@@ -191,32 +262,59 @@ async function onClickNextPageBtn(e) {
   e.preventDefault();
   console.log('next')
   console.log(e.target)
-  if (options.pageNumber < options.maxPage) {
-    options.pageNumber += 1;
-    const response = await fetchPhoto()
-    console.log(response)
-    countryArrayMarkup(response)
-    markupPages(response)
-  }
+  console.log(options.maxPage,'maxPage')
+  console.log(options.pageNumber,'pageNumber')
+  
+  
+    if (options.pageNumber < options.maxPage) {
+      // toggleNextPrevBtn()
+      //  if (options.pageNumber === options.maxPage-1) {
+      //   // options.pageNumber = options.maxPage
+      //   refs.nextPage.parentNode.classList.add('disabled')
+      // }
+      refs.prevPage.parentNode.classList.remove('disabled')
+      options.pageNumber += 1;     
+      const response = await fetchPhoto()
+      
+      console.log(response)
+      countryArrayMarkup(response)
+      markupPages(response)
+      console.dir(refs.pages.lastElementChild.firstElementChild.dataset.page,'dataset')
+      hideFirstPage()
+      hideLastPage()
+      togglePaginationBtn()
+
+
+    }
+  
 }
+console.log(options.pageNumber)
+console.log(options.maxPage)
 
 async function onClickMorePageBtn(e) {
   refs.gallery.innerHTML = ''
   refs.pages.innerHTML = ''
   e.preventDefault();
-  console.log('next')
+  console.log('more')
   console.log(e.target)
-  if (options.pageNumber < options.maxPage) {
-    if (options.pageNumber >= options.maxPage) {
+  console.log(options.pageNumber)
+  console.log(options.maxPage)
+  if (options.pageNumber <= options.maxPage) {
+    if (options.pageNumber+3 >= options.maxPage) {
       options.pageNumber = options.maxPage
     } else {
-      options.pageNumber += 10;
+      options.pageNumber += 3;
     }
     
     const response = await fetchPhoto()
     console.log(response)
     countryArrayMarkup(response)
     markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+
+    
   }
 }
 
@@ -225,18 +323,23 @@ async function onClickLessPageBtn(e) {
   refs.gallery.innerHTML = ''
   refs.pages.innerHTML = ''
   e.preventDefault();
-  console.log('next')
+  console.log('less')
   console.log(e.target)
-  if (options.pageNumber < options.maxPage) {
-    if (options.pageNumber <= 10) {
+  if (options.pageNumber <= options.maxPage) {
+    if (options.pageNumber <= 3) {
       options.pageNumber = 1
     } else {
-      options.pageNumber -= 10;
+      options.pageNumber -= 3;
     }
     const response = await fetchPhoto()
     console.log(response)
     countryArrayMarkup(response)
     markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+    // toggleNumberBtn()
+    // toggleNextPrevBtn()
   }
 }
 
