@@ -37,10 +37,20 @@ let lightbox
 
 // ================== tranding ==================
 async function startPageMarkUpPopularityMovie() {
+  removeSearchPaginationListeners()
+  removeGenresPaginationListeders()
+  addTrandingPaginationListeders()
+  
   const resp = await fetchTrandingMovie()
   options.pageNumber += 1
+  options.maxPage = resp.total_pages
   setTimeout(() => {
     countryArrayMarkup(resp)
+    
+    markupPages(resp)
+    hideFirstPage()
+    togglePaginationBtn()
+    
     refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnTrandingLink)
     setTimeout(() => refs.btnLoadMore.classList.remove('is-hidden'), 1000)
     console.log('Это tranding запрос',resp)
@@ -67,6 +77,161 @@ async function onClickLoadMoreBtnTrandingLink() {
   }
 }
 
+
+function addTrandingPaginationListeders() {
+  refs.prevPage.addEventListener('click',onClickPrevPageBtnTranding)
+refs.nextPage.addEventListener('click',onClickNextPageBtnTranding)
+refs.morePage.addEventListener('click',onClickMorePageBtnTranding)
+refs.lessPage.addEventListener('click',onClickLessPageBtnTranding)
+refs.pages.addEventListener('click', onClickNumberPageBtnTranding)
+}
+function removeTrandingPaginationListeders() {
+  refs.prevPage.removeEventListener('click',onClickPrevPageBtnTranding)
+refs.nextPage.removeEventListener('click',onClickNextPageBtnTranding)
+refs.morePage.removeEventListener('click',onClickMorePageBtnTranding)
+refs.lessPage.removeEventListener('click',onClickLessPageBtnTranding)
+refs.pages.removeEventListener('click', onClickNumberPageBtnTranding)
+}
+
+
+
+
+async function onClickNumberPageBtnTranding(e) {
+  if (e.target.nodeName === 'UL' || e.target.nodeName === 'LI') {
+    return
+  }
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log(e.target)
+  console.log(e.target.dataset.page)
+  console.dir(refs.pages)
+  options.pageNumber = +e.target.dataset.page
+  console.log(refs.pages)
+  console.log(refs.pages.firstElementChild)
+  // if (refs.pages.dataset.page === '0') {
+  //   refs.pages.classList.add('is-hidden')
+  // }
+  
+  const response = await fetchTrandingMovie()
+    console.log(response)
+  countryArrayMarkup(response)
+  markupPages(response)
+  hideFirstPage()
+  hideLastPage()
+  togglePaginationBtn()
+  
+}
+
+
+async function onClickPrevPageBtnTranding(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('prev')
+  console.log(e.target)
+  // toggleNextPrevBtn()
+  refs.nextPage.parentNode.classList.remove('disabled')
+  
+  
+  if (options.pageNumber > 1) {
+    options.pageNumber -= 1;
+    const response = await fetchTrandingMovie()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+    // toggleNextPrevBtn()
+    
+  }
+}
+async function onClickNextPageBtnTranding(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('next')
+  console.log(e.target)
+  console.log(options.maxPage,'maxPage')
+  console.log(options.pageNumber,'pageNumber')
+  
+  
+    if (options.pageNumber < options.maxPage) {
+      // toggleNextPrevBtn()
+      //  if (options.pageNumber === options.maxPage-1) {
+      //   // options.pageNumber = options.maxPage
+      //   refs.nextPage.parentNode.classList.add('disabled')
+      // }
+      refs.prevPage.parentNode.classList.remove('disabled')
+      options.pageNumber += 1;     
+      const response = await fetchTrandingMovie()
+      
+      console.log(response)
+      countryArrayMarkup(response)
+      markupPages(response)
+      console.dir(refs.pages.lastElementChild.firstElementChild.dataset.page,'dataset')
+      hideFirstPage()
+      hideLastPage()
+      togglePaginationBtn()
+
+
+    }
+  
+}
+console.log(options.pageNumber)
+console.log(options.maxPage)
+
+async function onClickMorePageBtnTranding(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('more')
+  console.log(e.target)
+  console.log(options.pageNumber)
+  console.log(options.maxPage)
+  if (options.pageNumber <= options.maxPage) {
+    if (options.pageNumber+3 >= options.maxPage) {
+      options.pageNumber = options.maxPage
+    } else {
+      options.pageNumber += 3;
+    }
+    
+    const response = await fetchTrandingMovie()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+
+    
+  }
+}
+
+
+async function onClickLessPageBtnTranding(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('less')
+  console.log(e.target)
+  if (options.pageNumber <= options.maxPage) {
+    if (options.pageNumber <= 3) {
+      options.pageNumber = 1
+    } else {
+      options.pageNumber -= 3;
+    }
+    const response = await fetchTrandingMovie()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+  }
+}
+
 // ================== trand zapros =================
 startPageMarkUpPopularityMovie()
 
@@ -79,7 +244,9 @@ async function onFormSubmit(event) {
   refs.btnLoadMore.classList.add('is-hidden')
   // formInput.value = 'avengers'
   options.query = formInput.value
-
+  removeGenresPaginationListeders()
+  removeTrandingPaginationListeders()
+  addSearchPaginationListeners()
   if (options.query.trim() === '') {
     return Notify.failure("Please enter film name")
   }
@@ -96,11 +263,13 @@ async function onFormSubmit(event) {
     if (response.results.length === 0) {
         return Notify.failure("Sorry, there are no images matching your search query. Please try again.")
     }
+    
     Notify.info(`Hooray! We found ${response.total_results} films.`)
     countryArrayMarkup(response)
     markupPages(response)
     hideFirstPage()
-   togglePaginationBtn()
+    togglePaginationBtn()
+    
 
 
     console.log(refs.gallery)
@@ -149,11 +318,20 @@ async function onClickLoadMoreBtnSearchLink() {
     console.log(error)
   }
 }
-refs.prevPage.addEventListener('click',onClickPrevPageBtn)
-refs.nextPage.addEventListener('click',onClickNextPageBtn)
-refs.morePage.addEventListener('click',onClickMorePageBtn)
-refs.lessPage.addEventListener('click',onClickLessPageBtn)
-refs.pages.addEventListener('click', onClickNumberPageBtn)
+function addSearchPaginationListeners() {
+  refs.prevPage.addEventListener('click', onClickPrevPageBtn)
+  refs.nextPage.addEventListener('click', onClickNextPageBtn)
+  refs.morePage.addEventListener('click', onClickMorePageBtn)
+  refs.lessPage.addEventListener('click', onClickLessPageBtn)
+  refs.pages.addEventListener('click', onClickNumberPageBtn)
+}
+function removeSearchPaginationListeners() {
+  refs.prevPage.removeEventListener('click', onClickPrevPageBtn)
+  refs.nextPage.removeEventListener('click', onClickNextPageBtn)
+  refs.morePage.removeEventListener('click', onClickMorePageBtn)
+  refs.lessPage.removeEventListener('click', onClickLessPageBtn)
+  refs.pages.removeEventListener('click', onClickNumberPageBtn)
+}
 
 function markupPages(array) {
   const  arrayMarkup = `<li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page - 1}>${array.page - 1}</a></li>
@@ -338,8 +516,6 @@ async function onClickLessPageBtn(e) {
     hideFirstPage()
     hideLastPage()
     togglePaginationBtn()
-    // toggleNumberBtn()
-    // toggleNextPrevBtn()
   }
 }
 
@@ -382,6 +558,7 @@ refs.genres.addEventListener('click', onGenresBtnClick)
 
 async function genresMarkup() {
   const r = await fetchGenres()
+  
   const genres = r.genres.map(({ id, name }) => {
     return `
     <button class="genres-btn btn btn-info"  id="${id}">${name}</button>`
@@ -390,9 +567,13 @@ async function genresMarkup() {
 }
 
 async function onGenresBtnClick(event) {
+  togglePaginationBtn()
   refs.btnLoadMore.removeEventListener('click', onClickLoadMoreBtnSearchLink)
   refs.btnLoadMore.removeEventListener('click',onClickLoadMoreBtnTrandingLink)
   refs.btnLoadMore.addEventListener('click', onClickLoadMoreBtnGenresLink)
+  removeSearchPaginationListeners()
+  removeTrandingPaginationListeders()
+  addGenresPaginationListeders()
   // const allRenderGenresButton = [...refs.genres.children]
   // allRenderGenresButton.forEach(eachBtn=>eachBtn.classList.remove('genresIsActive'))
   if (event.target === refs.genres) {
@@ -405,16 +586,22 @@ async function onGenresBtnClick(event) {
   // options.genresId.push(event.target.id)
   try {
     const a = await discoverGenres()
-
+    options.maxPage = a.total_pages
     console.log('e.target:', event.target)
     console.log('options.genresId:', options.genresId)
 
     refs.gallery.innerHTML = ''
+    refs.pages.innerHTML = ''
     setTimeout(() => refs.btnLoadMore.classList.remove('is-hidden'), 1000)
     // countryArrayMarkup(a) - old
     console.log('результат поиска',a.results)
     console.log('количесво фильмов',a.total_results)
     countryArrayMarkup(a)
+    console.log(a)
+    markupPages(a)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
     options.pageNumber += 1
   } catch (err) {
     console.log(err)
@@ -448,7 +635,162 @@ async function onClickLoadMoreBtnGenresLink() {
     console.log(error)
   }
 }
-   
+
+function addGenresPaginationListeders() {
+  refs.prevPage.addEventListener('click',onClickPrevPageBtnGenres)
+refs.nextPage.addEventListener('click',onClickNextPageBtnGenres)
+refs.morePage.addEventListener('click',onClickMorePageBtnGenres)
+refs.lessPage.addEventListener('click',onClickLessPageBtnGenres)
+refs.pages.addEventListener('click', onClickNumberPageBtnGenres)
+}
+function removeGenresPaginationListeders() {
+  refs.prevPage.removeEventListener('click',onClickPrevPageBtnGenres)
+refs.nextPage.removeEventListener('click',onClickNextPageBtnGenres)
+refs.morePage.removeEventListener('click',onClickMorePageBtnGenres)
+refs.lessPage.removeEventListener('click',onClickLessPageBtnGenres)
+refs.pages.removeEventListener('click', onClickNumberPageBtnGenres)
+}
+
+
+
+
+async function onClickNumberPageBtnGenres(e) {
+  if (e.target.nodeName === 'UL' || e.target.nodeName === 'LI') {
+    return
+  }
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log(e.target)
+  console.log(e.target.dataset.page)
+  console.dir(refs.pages)
+  options.pageNumber = +e.target.dataset.page
+  console.log(refs.pages)
+  console.log(refs.pages.firstElementChild)
+  // if (refs.pages.dataset.page === '0') {
+  //   refs.pages.classList.add('is-hidden')
+  // }
+  
+  const response = await discoverGenres()
+    console.log(response)
+  countryArrayMarkup(response)
+  markupPages(response)
+  hideFirstPage()
+  hideLastPage()
+  togglePaginationBtn()
+  
+}
+
+
+async function onClickPrevPageBtnGenres(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('prev')
+  console.log(e.target)
+  // toggleNextPrevBtn()
+  refs.nextPage.parentNode.classList.remove('disabled')
+  
+  
+  if (options.pageNumber > 1) {
+    options.pageNumber -= 1;
+    const response = await discoverGenres()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+    // toggleNextPrevBtn()
+    
+  }
+}
+async function onClickNextPageBtnGenres(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('next')
+  console.log(e.target)
+  console.log(options.maxPage,'maxPage')
+  console.log(options.pageNumber,'pageNumber')
+  
+  
+    if (options.pageNumber < options.maxPage) {
+      // toggleNextPrevBtn()
+      //  if (options.pageNumber === options.maxPage-1) {
+      //   // options.pageNumber = options.maxPage
+      //   refs.nextPage.parentNode.classList.add('disabled')
+      // }
+      refs.prevPage.parentNode.classList.remove('disabled')
+      options.pageNumber += 1;     
+      const response = await discoverGenres()
+      
+      console.log(response)
+      countryArrayMarkup(response)
+      markupPages(response)
+      console.dir(refs.pages.lastElementChild.firstElementChild.dataset.page,'dataset')
+      hideFirstPage()
+      hideLastPage()
+      togglePaginationBtn()
+
+
+    }
+  
+}
+console.log(options.pageNumber)
+console.log(options.maxPage)
+
+async function onClickMorePageBtnGenres(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('more')
+  console.log(e.target)
+  console.log(options.pageNumber)
+  console.log(options.maxPage)
+  if (options.pageNumber <= options.maxPage) {
+    if (options.pageNumber+3 >= options.maxPage) {
+      options.pageNumber = options.maxPage
+    } else {
+      options.pageNumber += 3;
+    }
+    
+    const response = await discoverGenres()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+
+    
+  }
+}
+
+
+async function onClickLessPageBtnGenres(e) {
+  refs.gallery.innerHTML = ''
+  refs.pages.innerHTML = ''
+  e.preventDefault();
+  console.log('less')
+  console.log(e.target)
+  if (options.pageNumber <= options.maxPage) {
+    if (options.pageNumber <= 3) {
+      options.pageNumber = 1
+    } else {
+      options.pageNumber -= 3;
+    }
+    const response = await discoverGenres()
+    console.log(response)
+    countryArrayMarkup(response)
+    markupPages(response)
+    hideFirstPage()
+    hideLastPage()
+    togglePaginationBtn()
+  }
+}
+
+
 
 
 
