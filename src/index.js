@@ -1,13 +1,9 @@
 import '../scss/custom.scss'
 import './css/styles.css';
-import SimpleLightbox from 'simplelightbox';
-import 'simplelightbox/dist/simple-lightbox.min.css';
 import { Notify } from "notiflix/build/notiflix-notify-aio";
 import { fetchPhoto, fetchGenres,discoverGenres, fetchTrandingMovie} from './fetchPhoto'
 import { options } from './fetchPhoto'
-import { hide, preventOverflow } from '@popperjs/core';
-import { Button } from 'bootstrap';
-import { assign, max } from 'lodash';
+var throttle = require('lodash.throttle');
 
 
 const refs = {
@@ -19,7 +15,7 @@ const refs = {
     nextPage: document.querySelector("[data-page='next']"),
     lessPage: document.querySelector("[data-page='less']"),
     morePage: document.querySelector("[data-page='more']"),
-  pages: document.querySelector('.pages'),
+    pages: document.querySelector('.pages'),
     
     
 }
@@ -28,15 +24,16 @@ let currentPage = 1
 
 genresMarkup()
 const formInput = refs.form.elements.searchQuery;
-refs.form.addEventListener('submit', hztest)
-refs.genres.addEventListener('click', hztest)
+refs.form.addEventListener('submit', checkFetchLink)
+refs.genres.addEventListener('click', throttle(checkFetchLink, 200))
 
 
 let ress = ''
-testTrandStart()
+onLoadTranding()
 addTestPaginationListeners()
 
-async function hztest(e) {
+async function checkFetchLink(e) {
+
   if (e.target === refs.genres){
     return
   }
@@ -45,6 +42,8 @@ async function hztest(e) {
   refs.pages.innerHTML = ''
   options.pageNumber = 1;
   options.query = formInput.value
+  try {
+    
   // ==== chech input ====
   if (e.currentTarget === refs.form) {
       if (options.query.trim() === '') {
@@ -59,29 +58,23 @@ async function hztest(e) {
       removeAllChekedGenres()
     }
   // ===== chek genres ===== 
-  try {
-    
+
   if (e.currentTarget === refs.genres) {
-    console.log('PPP')
       currentFetch = 'genres'
       formInput.value = ''
       e.target.classList.toggle('genresIsActive')
       options.pageNumber = 1
-      toggleGenres(e.target.id)
+    toggleGenres(e.target.id)
     
       ress = await discoverGenres()
-      console.log('e.target', e.target.id)
-      console.log('e.currentTarget', e.currentTarget)
-      console.log('refs.genres', refs.genres)
       console.log('genres', ress)
       console.log('currentFetch ',currentFetch)
     }
-    console.log(ress)
     options.maxPage = ress.total_pages
-    countryArrayMarkup(ress)
+    galleryArrayMarkup(ress)
     markupPages(ress)
-    hideFirstPage()
-    hideLastPage()
+    hideFirstPageBtn()
+    hideLastPageBtn()
     togglePaginationBtn()
     
     
@@ -117,13 +110,13 @@ function togglePaginationBtn() {
 }
 
 
-function hideFirstPage() {
+function hideFirstPageBtn() {
   if (refs.pages.firstElementChild.firstElementChild.dataset.page === '0') {
     refs.pages.firstElementChild.classList.add('is-hidden')
   }
 }
 
-function hideLastPage() {
+function hideLastPageBtn() {
   if (refs.pages.lastElementChild.firstElementChild.dataset.page-1 >= options.maxPage) {
     refs.pages.lastElementChild.classList.add('is-hidden')
   }
@@ -157,10 +150,10 @@ async function onClickNumberPageBtn(e) {
     response = await discoverGenres()
     console.log('genres',response)
   }
-  countryArrayMarkup(response)
+  galleryArrayMarkup(response)
   markupPages(response)
-  hideFirstPage()
-  hideLastPage()
+  hideFirstPageBtn()
+  hideLastPageBtn()
   togglePaginationBtn()
   
   
@@ -189,10 +182,10 @@ async function onClickPrevPageBtn(e) {
     response = await discoverGenres()
     console.log('genres',response)
   }
-    countryArrayMarkup(response)
+    galleryArrayMarkup(response)
     markupPages(response)
-    hideFirstPage()
-    hideLastPage()
+    hideFirstPageBtn()
+    hideLastPageBtn()
     togglePaginationBtn()    
      
   }
@@ -223,11 +216,11 @@ let response
     response = await discoverGenres()
     console.log('genres',response)
   }
-      countryArrayMarkup(response)
+      galleryArrayMarkup(response)
       markupPages(response)
       console.dir(refs.pages.lastElementChild.firstElementChild.dataset.page,'dataset')
-      hideFirstPage()
-      hideLastPage()
+      hideFirstPageBtn()
+      hideLastPageBtn()
       togglePaginationBtn()
       
     }
@@ -262,10 +255,10 @@ let response
     response = await discoverGenres()
     console.log('genres',response)
   }
-    countryArrayMarkup(response)
+    galleryArrayMarkup(response)
     markupPages(response)
-    hideFirstPage()
-    hideLastPage()
+    hideFirstPageBtn()
+    hideLastPageBtn()
     togglePaginationBtn()
     
   }
@@ -296,10 +289,10 @@ let response
     response = await discoverGenres()
     console.log('genres',response)
   }
-    countryArrayMarkup(response)
+    galleryArrayMarkup(response)
     markupPages(response)
-    hideFirstPage()
-    hideLastPage()
+    hideFirstPageBtn()
+    hideLastPageBtn()
     togglePaginationBtn()
     
   }
@@ -309,15 +302,15 @@ let response
 
 
 // ================== tranding Startpage ==================
-async function testTrandStart() {
+async function onLoadTranding() {
   ress = await fetchTrandingMovie()
   const resp = await fetchTrandingMovie()
   
   options.maxPage = resp.total_pages
-    countryArrayMarkup(resp)
+    galleryArrayMarkup(resp)
     markupPages(resp)
-    hideFirstPage()
-    hideLastPage()
+    hideFirstPageBtn()
+    hideLastPageBtn()
     togglePaginationBtn()
   removeAllChekedGenres()
   options.pageNumber += 1
@@ -327,10 +320,10 @@ async function testTrandStart() {
 // ================ PaginationMarkup ===========
 
 function markupPages(array) {
-  const  arrayMarkup = `<li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page - 1}>${array.page - 1}</a></li>
+  const  pagesBtnMarkup = `<li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page - 1}>${array.page - 1}</a></li>
           <li class="page_item btn btn-info disabled"><a href="#" class="page_link genresIsActive" data-page=${array.page}>${array.page}</a></li>
           <li class="page_item btn btn-info"><a href="#" class="page_link" data-page=${array.page + 1}>${array.page + 1}</a></li>`
-  refs.pages.insertAdjacentHTML('beforeend', arrayMarkup)
+  refs.pages.insertAdjacentHTML('beforeend', pagesBtnMarkup)
 }
 
 // ======================== disabledPaginationLink ==================
@@ -343,8 +336,8 @@ function buttonDisabledFalse() {
 }
 
 //=========================== разметкa Галереи фильмов ====================
-function countryArrayMarkup(array) {
-    const arrayMarkup = array.results.map(({poster_path,original_title,vote_average}) =>
+function galleryArrayMarkup(array) {
+    const galleryMarkup = array.results.map(({poster_path,original_title,vote_average}) =>
     {
       // console.log(largeImageURL)
       return `
@@ -363,7 +356,7 @@ function countryArrayMarkup(array) {
   </div>
 `
     }).join("")
-  refs.gallery.insertAdjacentHTML('beforeend', arrayMarkup)
+  refs.gallery.insertAdjacentHTML('beforeend', galleryMarkup)
 }
 console.log('genresId', options.genresId)
 
